@@ -1,0 +1,30 @@
+{
+  "name": "crowdfund",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node Backend/server.js",
+    "dev": "nodemon Backend/server.js",
+    "frontend": "cd Mypro && npm run dev",
+    "both": "npm run dev && npm run frontend"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "body-parser": "^2.2.2",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.2.1",
+    "nodemailer": "^8.0.1",
+    "paytmchecksum": "^1.5.1",
+    "qs": "^6.15.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}

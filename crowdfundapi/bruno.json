@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "CrowdFundAPI",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

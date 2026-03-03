@@ -1,0 +1,20 @@
+meta {
+  name: Initiate
+  type: http
+  seq: 1
+}
+
+post {
+  url: https://securestage.paytmpayments.com/theia/api/v1/initiateTransaction?mid={mid}&orderId=ORDERID_9876
+  body: none
+  auth: inherit
+}
+
+params:query {
+  mid: {mid}
+  orderId: ORDERID_9876
+}
+
+settings {
+  encodeUrl: true
+}

@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CrowdHope | Empowering Dreams</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #ec4899;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            padding: 1.5rem 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid var(--glass-border);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero {
+            padding: 8rem 5% 5rem;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            line-height: 1.1;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-muted);
+            max-width: 700px;
+            margin: 0 auto 2.5rem;
+        }
+
+        .btn {
+            padding: 1rem 2.5rem;
+            border-radius: 99px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            display: inline-block;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 10px 20px -10px var(--primary);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px -10px var(--primary);
+        }
+
+        .campaigns-grid {
+            padding: 5rem 5%;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 24px;
+            padding: 1.5rem;
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            border-color: var(--primary);
+        }
+
+        .card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        .card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .stats span { color: var(--primary); }
+
+        .modal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: var(--bg);
+            border: 1px solid var(--glass-border);
+            padding: 3rem;
+            border-radius: 32px;
+            width: 100%;
+            max-width: 450px;
+            text-align: center;
+        }
+
+        input {
+            width: 100%;
+            padding: 1.25rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            color: white;
+            margin-bottom: 1.5rem;
+            font-size: 1.1rem;
+            outline: none;
+        }
+
+        input:focus { border-color: var(--primary); }
+
+        .loading {
+            text-align: center;
+            padding: 5rem;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            grid-column: 1 / -1;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="logo">CrowdHope</div>
+        <div class="nav-links">
+            <a href="#" class="btn btn-primary" style="padding: 0.6rem 1.5rem; font-size: 0.9rem;">Start Campaign</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <h1>Small Steps, <br><span style="color: var(--primary)">Big Changes.</span></h1>
+        <p>Join thousands of people making a real difference. Support local initiatives and global causes with transparent, secure crowdfunding.</p>
+        <button class="btn btn-primary" onclick="scrollToCampaigns()">Explore Causes</button>
+    </section>
+
+    <div id="campaigns" class="campaigns-grid">
+        <div class="loading">Fetching active campaigns...</div>
+    </div>
+
+    <!-- Donation Modal -->
+    <div id="donateModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle" style="margin-bottom: 1rem;">Support this Cause</h2>
+            <p id="modalSub" style="color: var(--text-muted); margin-bottom: 2rem;">Every contribution matters.</p>
+            <form id="paymentForm" method="POST">
+                <input type="number" name="amount" placeholder="Enter amount (₹)" required min="1">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Proceed to Payment</button>
+            </form>
+            <button onclick="closeModal()" style="background: none; border: none; color: var(--text-muted); margin-top: 1.5rem; cursor: pointer;">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        async function fetchCampaigns() {
+            try {
+                const response = await fetch('/api/campaign/all');
+                const campaigns = await response.json();
+                const grid = document.getElementById('campaigns');
+                grid.innerHTML = '';
+
+                campaigns.forEach(c => {
+                    const percent = Math.min(100, (c.raised / c.required) * 100);
+                    const card = `
+                        <div class="card">
+                            <img src="${c.imageUrl || 'https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?auto=format&fit=crop&w=800&q=80'}" alt="${c.title}">
+                            <h3>${c.title}</h3>
+                            <p>${c.description.substring(0, 100)}...</p>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${percent}%"></div>
+                            </div>
+                            <div class="stats">
+                                <div>₹${c.raised.toLocaleString()} <span>Raised</span></div>
+                                <div>${percent.toFixed(0)}%</div>
+                            </div>
+                            <button class="btn btn-primary" style="width: 100%; margin-top: 1.5rem; border-radius: 12px;" onclick="openDonate('${c._id}', '${c.title}')">Donate Now</button>
+                        </div>
+                    `;
+                    grid.innerHTML += card;
+                });
+            } catch (err) {
+                document.getElementById('campaigns').innerHTML = '<div class="loading">Error loading campaigns. Please make sure the server is running.</div>';
+            }
+        }
+
+        function scrollToCampaigns() {
+            document.getElementById('campaigns').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function openDonate(id, title) {
+            document.getElementById('modalTitle').innerText = `Support ${title}`;
+            document.getElementById('paymentForm').action = `/api/donate/${id}/payment`;
+            document.getElementById('donateModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('donateModal').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == document.getElementById('donateModal')) closeModal();
+        }
+
+        fetchCampaigns();
+    </script>
+</body>
+</html>
