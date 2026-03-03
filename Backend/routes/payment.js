@@ -1,6 +1,8 @@
 const config = require("../config");
+const mongoose = require("mongoose");
 
-const backendURL = process.env.BACKEND_URL || "http://localhost:4000/";
+const rawBackendURL = process.env.BACKEND_URL || "http://localhost:4000";
+const backendURL = rawBackendURL.endsWith("/") ? rawBackendURL : rawBackendURL + "/";
 
 const express = require("express");
 const PaytmChecksum = require("paytmchecksum");
@@ -12,12 +14,16 @@ const ctrl = require("../controllers");
 const { Donation } = require("../models");
 
 router.post("/:id/payment", [parseUrl, parseJson], (req, res) => {
+  if (!req.body.amount || req.body.amount <= 0) {
+    return res.status(400).json({ message: "Please enter a valid amount!" });
+  }
+
   var donationData = {
     amount: req.body.amount,
     campaign: req.params.id,
   };
 
-  if (req.body.userId) {
+  if (req.body.userId && mongoose.Types.ObjectId.isValid(req.body.userId)) {
     donationData.donor = req.body.userId;
   }
 
@@ -26,51 +32,37 @@ router.post("/:id/payment", [parseUrl, parseJson], (req, res) => {
   donation
     .save()
     .then(() => {
-      if (!req.body.amount || req.body.amount <= 0) {
-        return res.status(400).send("Please enter the amount!");
-      }
+      // Paytm requires parameters - using official format
+      var paytmParams = {};
+      paytmParams["MID"] = config.PaytmConfig.mid;
+      paytmParams["WEBSITE"] = config.PaytmConfig.website;
+      paytmParams["ORDER_ID"] = donation._id.toString();
+      paytmParams["CUST_ID"] = donation._id.toString();
+      paytmParams["TXN_AMOUNT"] = req.body.amount.toString();
+      paytmParams["CALLBACK_URL"] = backendURL + "api/donate/success";
+      paytmParams["CHANNEL_ID"] = "WEB";
+      paytmParams["INDUSTRY_TYPE_ID"] = "Retail";
+      paytmParams["EMAIL"] = "";
+      paytmParams["MOBILE_NO"] = "";
 
-      var params = {};
-      params["MID"] = config.PaytmConfig.mid;
-      params["ORDER_ID"] = donation._id.toString();
-      params["CUST_ID"] = donation._id.toString();
-      params["TXN_AMOUNT"] = req.body.amount.toString();
-      params["CHANNEL_ID"] = "WEB";
-      params["INDUSTRY_TYPE_ID"] = "Retail";
-      params["WEBSITE"] = config.PaytmConfig.website;
-      params["CALLBACK_URL"] = backendURL + "api/donate/success";
-      params["EMAIL"] = "";
-      params["MOBILE_NO"] = "";
+      console.log("Paytm Config MID:", config.PaytmConfig.mid);
+      console.log("Callback URL:", paytmParams["CALLBACK_URL"]);
 
-      console.log("Paytm Config:", config.PaytmConfig);
-
-      PaytmChecksum.generateSignature(params, config.PaytmConfig.key)
+      PaytmChecksum.generateSignature(paytmParams, config.PaytmConfig.key)
         .then(function (checksum) {
+          // Using Paytm staging processTransaction URL
           var txn_url = "https://securegw-stage.paytm.in/theia/processTransaction";
 
-          console.log("Checksum:", checksum);
+          console.log("Generated Checksum:", checksum);
 
-          var form_fields = "";
-          for (var x in params) {
-            form_fields +=
-              '<input name="' + x + '" value="' + params[x] + '" type="hidden" />';
-          }
-          form_fields += '<input name="CHECKSUMHASH" value="' + checksum + '" type="hidden" />';
-
-          var html =
-            '<html><head><title>Merchant Checkout Page</title></head><body><center><h1>Please do not refresh this page...</h1></center><form method="post" action="' +
-            txn_url +
-            '" name="f1">' +
-            form_fields +
-            '</form><script type="text/javascript">document.f1.submit();</script></body></html>';
-
-          res.writeHead(200, { "Content-Type": "text/html" });
-          res.write(html);
-          res.end();
+          res.status(200).json({
+            txn_url: txn_url,
+            params: { ...paytmParams, CHECKSUMHASH: checksum },
+          });
         })
         .catch(function (err) {
           console.log("Error generating checksum:", err);
-          res.status(500).send("Error generating checksum");
+          res.status(500).json({ message: "Error generating checksum" });
         });
     })
     .catch((err) => {
