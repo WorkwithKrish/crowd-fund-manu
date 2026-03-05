@@ -1,8 +1,7 @@
 require("dotenv").config();
 
-var PaytmConfig = {
-  mid: process.env.mid,
-  key: process.env.key,
-  website: process.env.website,
+var RazorpayConfig = {
+  keyId: process.env.RAZORPAY_KEY,
+  keySecret: process.env.RAZORPAY_SECRET,
 };
-module.exports.PaytmConfig = PaytmConfig;
+module.exports.RazorpayConfig = RazorpayConfig;

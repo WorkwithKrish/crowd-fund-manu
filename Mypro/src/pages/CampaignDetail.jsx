@@ -50,24 +50,53 @@ function CampaignDetail() {
         }
       );
 
-      const { txn_url, params } = res.data;
+      const { orderId, amount, currency, keyId, donationId } = res.data;
 
-      if (txn_url && params) {
-        const form = document.createElement("form");
-        form.method = "POST";
-        form.action = txn_url;
-        form.style.display = "none";
+      if (orderId && keyId) {
+        const options = {
+          key: keyId,
+          amount: amount,
+          currency: currency,
+          name: "Crowdfund",
+          description: "Donation to Campaign",
+          order_id: orderId,
+          handler: async function (response) {
+            try {
+              const verifyRes = await axios.post(
+                `http://localhost:4000/api/donate/verify`,
+                {
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
+                  donationId: donationId,
+                }
+              );
 
-        Object.entries(params).forEach(([key, value]) => {
-          const input = document.createElement("input");
-          input.type = "hidden";
-          input.name = key;
-          input.value = value;
-          form.appendChild(input);
+              if (verifyRes.data.success) {
+                window.location.href = `/donation/success/${donationId}`;
+              } else {
+                window.location.href = `/donation/failure`;
+              }
+            } catch (err) {
+              console.error(err);
+              window.location.href = `/donation/failure`;
+            }
+          },
+          prefill: {
+            name: userData.name || "",
+            email: userData.email || "",
+          },
+          theme: {
+            color: "#3399cc",
+          },
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+
+        rzp.on("payment.failed", function (response) {
+          window.location.href = `/donation/failure`;
         });
-
-        document.body.appendChild(form);
-        form.submit();
       } else {
         alert("Payment initiation failed. Please try again.");
       }

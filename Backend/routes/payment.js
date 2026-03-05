@@ -1,11 +1,8 @@
 const config = require("../config");
 const mongoose = require("mongoose");
-
-const rawBackendURL = process.env.BACKEND_URL || "http://localhost:4000";
-const backendURL = rawBackendURL.endsWith("/") ? rawBackendURL : rawBackendURL + "/";
+const Razorpay = require("razorpay");
 
 const express = require("express");
-const PaytmChecksum = require("paytmchecksum");
 const parseUrl = express.urlencoded({ extended: false });
 const parseJson = express.json({ extended: false });
 
@@ -13,12 +10,17 @@ const router = express.Router();
 const ctrl = require("../controllers");
 const { Donation } = require("../models");
 
-router.post("/:id/payment", [parseUrl, parseJson], (req, res) => {
+const razorpay = new Razorpay({
+  key_id: config.RazorpayConfig.keyId,
+  key_secret: config.RazorpayConfig.keySecret,
+});
+
+router.post("/:id/payment", [parseUrl, parseJson], async (req, res) => {
   if (!req.body.amount || req.body.amount <= 0) {
     return res.status(400).json({ message: "Please enter a valid amount!" });
   }
 
-  var donationData = {
+  const donationData = {
     amount: req.body.amount,
     campaign: req.params.id,
   };
@@ -27,50 +29,35 @@ router.post("/:id/payment", [parseUrl, parseJson], (req, res) => {
     donationData.donor = req.body.userId;
   }
 
-  var donation = new Donation(donationData);
+  try {
+    const donation = new Donation(donationData);
+    await donation.save();
 
-  donation
-    .save()
-    .then(() => {
-      // Paytm requires parameters - using official format
-      var paytmParams = {};
-      paytmParams["MID"] = config.PaytmConfig.mid;
-      paytmParams["WEBSITE"] = config.PaytmConfig.website;
-      paytmParams["ORDER_ID"] = donation._id.toString();
-      paytmParams["CUST_ID"] = donation._id.toString();
-      paytmParams["TXN_AMOUNT"] = req.body.amount.toString();
-      paytmParams["CALLBACK_URL"] = backendURL + "api/donate/success";
-      paytmParams["CHANNEL_ID"] = "WEB";
-      paytmParams["INDUSTRY_TYPE_ID"] = "Retail";
-      paytmParams["EMAIL"] = "";
-      paytmParams["MOBILE_NO"] = "";
+    const options = {
+      amount: req.body.amount * 100, // Razorpay expects amount in paise
+      currency: "INR",
+      receipt: donation._id.toString(),
+      notes: {
+        donationId: donation._id.toString(),
+        campaignId: req.params.id,
+      },
+    };
 
-      console.log("Paytm Config MID:", config.PaytmConfig.mid);
-      console.log("Callback URL:", paytmParams["CALLBACK_URL"]);
+    const order = await razorpay.orders.create(options);
 
-      PaytmChecksum.generateSignature(paytmParams, config.PaytmConfig.key)
-        .then(function (checksum) {
-          // Using Paytm staging processTransaction URL
-          var txn_url = "https://securegw-stage.paytm.in/theia/processTransaction";
-
-          console.log("Generated Checksum:", checksum);
-
-          res.status(200).json({
-            txn_url: txn_url,
-            params: { ...paytmParams, CHECKSUMHASH: checksum },
-          });
-        })
-        .catch(function (err) {
-          console.log("Error generating checksum:", err);
-          res.status(500).json({ message: "Error generating checksum" });
-        });
-    })
-    .catch((err) => {
-      console.log("Error:", err);
-      return res.status(500).json({ message: "Error saving donation" });
+    res.status(200).json({
+      orderId: order.id,
+      amount: order.amount,
+      currency: order.currency,
+      keyId: config.RazorpayConfig.keyId,
+      donationId: donation._id.toString(),
     });
+  } catch (err) {
+    console.log("Error:", err);
+    return res.status(500).json({ message: "Error creating payment order" });
+  }
 });
 
-router.post("/success", ctrl.payment.success);
+router.post("/verify", ctrl.payment.verify);
 
 module.exports = router;
